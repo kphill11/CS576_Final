@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+    <head>
+	 <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    
+    <title>County Level Projection of Medical Resource Utilization</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+        <meta charset="utf-8">
+        <style>
+            table {
+                border-collapse: collapse;
+                border: 2px black solid;
+                font: 12px sans-serif;
+				margin: 0 auto;
+            }
+
+            td {
+                border: 1px black solid;
+                padding: 5px;
+            }
+			th{
+				border: 2px black solid;
+                padding: 5px;
+			}
+			 .svg-container{
+				display: inline-block;
+				margin: 0 auto;
+			}
+			.title{
+				text-align: center
+			}
+			.imagalign{
+				width:300;
+				height:100;
+			}
+        </style>
+
+	
+	
+    
+</head>
+    <body>
+	
+    <div class="wrapper">
+        <div class="covidheading">
+            <div class="imgalign">
+                <img src="cover.jpg" width = "1470" height="400"/> 
+            </div>
+            <div class="title">    
+       <h1>County Level Projection of Medical Resource Utilization</h1>
+            </div>
+        </div>
+	<div class="svg-container">
+	
+       <script src="http://d3js.org/d3.v3.min.js"></script>
+	
+        <script type="text/javascript"charset="utf-8">
+            d3.text("data1.csv", function(data) {
+                var parsedCSV = d3.csv.parseRows(data);
+
+                var container = d3.select("body")
+                    .append("table")
+
+                    .selectAll("tr")
+                        .data(parsedCSV).enter()
+                        .append("tr")
+
+                    .selectAll("td")
+                        .data(function(d) { return d; }).enter()
+                        .append("td")
+                        .text(function(d) { return d; });
+            });
+        </script>
+	</div>	
+    </body>
+</html>
