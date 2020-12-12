@@ -13,13 +13,134 @@ import (
 
 type County struct {
 	name     string
+	state string
+	id string
 	numBeds  int
 	timeline [95]int
 }
 
-func newCounty(newName string) County {
+func convertToCode(given string) string {
+	switch given {
+	case "alabama":
+		return "al"
+	case "alaska":
+		return "ak"
+	case "american samoa":
+		return "as"
+	case "arkansas":
+		return "ar"
+	case "california":
+		return "ca"
+	case "colorado":
+		return "co"
+	case "delaware":
+		return "de"
+	case "district of columbia":
+		return "dc"
+	case "florida":
+		return "fl"
+	case "georgia":
+		return "ga"
+	case "guam":
+		return "gu"
+	case "hawaii":
+		return "hi"
+	case "idaho":
+		return "id"
+	case "illinois":
+		return "il"
+	case "indiana":
+		return "in"
+	case "iowa":
+		return "ia"
+	case "kansas":
+		return "ks"
+	case "kentucky":
+		return "ky"
+	case "louisiana":
+		return "la"
+	case "maine":
+		return "me"
+	case "maryland":
+		return "md"
+	case "massachusetts":
+		return "ma"
+	case "michigan":
+		return "mi"
+	case "minnesota":
+		return "mn"
+	case "mississippi":
+		return "ms"
+	case "missouri":
+		return "mo"
+	case "montana":
+		return "mt"
+	case "nebraska":
+		return "ne"
+	case "nevada":
+		return "nv"
+	case "new hampshire":
+		return "nh"
+	case "new jersey":
+		return "nj"
+	case "new mexico":
+		return "nm"
+	case "new york":
+		return "ny"
+	case "north carolina":
+		return "nc"
+	case "north dakota":
+		return "nd"
+	case "northern mariana is":
+		return "mp"
+	case "ohio":
+		return "oh"
+	case "oklahoma":
+		return "ok"
+	case "oregon":
+		return "or"
+	case "pennsylvania":
+		return "pa"
+	case "puerto rico":
+		return "pr"
+	case "rhode island":
+		return "ri"
+	case "south carolina":
+		return "sc"
+	case "south dakota":
+		return "sd"
+	case "tennessee":
+		return "tn"
+	case "texas":
+		return "tx"
+	case "utah":
+		return "ut"
+	case "vermont":
+		return "vt"
+	case "virginia":
+		return "va"
+	case "virgin islands":
+		return "vi"
+	case "washington":
+		return "wa"
+	case "west virginia":
+		return "wv"
+	case "wisconsin":
+		return "wi"
+	case "wyoming":
+		return "wy"
+	default:
+		return "not given"
+
+	}
+
+}
+
+func newCounty(newName string, newState string) County {
 	county := County{}
 	county.name = newName
+	county.state = newState
+	county.id = fmt.Sprintf("%s.%s", county.state, county.name)
 	county.numBeds = 0
 	for i := 0; i < len(county.timeline); i++ {
 		county.timeline[i] = 0
@@ -27,9 +148,9 @@ func newCounty(newName string) County {
 	return county
 }
 
-func findCounty(counties []County, name string) int {
+func findCounty(counties []County, name string, state string) int {
 	for i := 0; i < len(counties); i++ {
-		if counties[i].name == name {
+		if counties[i].name == name && counties[i].state == state {
 			return i
 		}
 	}
@@ -40,6 +161,7 @@ func findCounty(counties []County, name string) int {
 //func readInput(counties []County) []County {
 func main() {
 	//hospitals.csv:
+	//field 7 is state
 	//field 13 is population
 	//field 14 is county
 	//field 32 is beds
@@ -54,7 +176,7 @@ func main() {
 	}
 	reader := csv.NewReader(csvHospFile)
 	line, err := reader.Read() //just getting the definitional line out of the way
-	//fmt.Printf("%s, %s, %s\n", line[14], line[13], line[31])
+	fmt.Printf("%s, %s\n", line[14], line[7])
 	for {
 		line, err = reader.Read()
 		if err == io.EOF {
@@ -64,11 +186,12 @@ func main() {
 			fmt.Printf("\n%s\n", err)
 			os.Exit(3)
 		} else {
-			name := strings.ToLower(strings.Trim(line[14], " "))
-			if name != "not available" {
-				index := findCounty(counties, name)
+			countyName := strings.ToLower(strings.Trim(line[14], " "))
+			stateName := strings.ToLower(strings.Trim(line[7], " "))
+			if countyName != "not available" {
+				index := findCounty(counties, countyName, stateName)
 				if index < 0 { //if the county isn't already on record
-					counties = append(counties, newCounty(name))
+					counties = append(counties, newCounty(countyName, stateName))
 					index = len(counties) - 1
 				}
 				if line[31] != "-999" {
@@ -88,6 +211,7 @@ func main() {
 	//covid-latest.csv
 	//field 0 is date
 	//field 1 is County
+	//field 2 is State
 	//field 4 is cases
 	csvCovidFile, errCov := os.Open("..\\CS576_Final\\data\\covid-latest.csv")
 	if errCov != nil {
@@ -112,9 +236,10 @@ func main() {
 			os.Exit(3)
 		} else {
 			name := strings.ToLower(strings.Trim(line[1], " "))
-			index := findCounty(counties, name)
+			state := convertToCode(strings.ToLower(strings.Trim(line[2], " ")))
+			index := findCounty(counties, name, state)
 			if index < 0 { //if the county isn't already on record - bit more or a problem here
-				counties = append(counties, newCounty(name))
+				counties = append(counties, newCounty(name, state))
 				index = len(counties) - 1
 				//counties[index].pop = strconv.Atoi(line[13]) //county population, not likely to change significantly enough to track
 			}
@@ -134,7 +259,6 @@ func main() {
 	for i := len(counties) - 1; i > 0; i-- {
 		if counties[i].numBeds == 0 {
 			counties[i] = counties[len(counties)-1]
-			//counties[len(counties) - 1] = null
 			counties = counties[:len(counties)-1]
 			i--
 		}
