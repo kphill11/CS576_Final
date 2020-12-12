@@ -158,15 +158,8 @@ func main() {
 		}()
 	}
 
-	//c := make(chan string)
 	for _, county := range counties {
 		queue <- county
-		//county := county
-		//go func() {
-		//fmt.Println(i, string(buff))
-		//}()
-
-		//time.Sleep(100 * time.Millisecond)
 	}
 
 	var predictedCounties []FloatEntry
@@ -183,7 +176,7 @@ func main() {
 		currentEntry := FloatEntry{entry.key, float32(county.timeline[len(county.timeline)-1]) / float32(county.numBeds)}
 		currentCounties = append(currentCounties, currentEntry)
 
-		changeEntry := FloatEntry{entry.key, currentEntry.value - predictedEntry.value}
+		changeEntry := FloatEntry{entry.key, predictedEntry.value - currentEntry.value}
 		changeCounties = append(changeCounties, changeEntry)
 	}
 
