@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -145,12 +144,30 @@ func main2() {
 	convertToJSON(counties)
 }
 
+//func convertToJSON(arr []County) string {
+//	var buff bytes.Buffer
+//	for i := 0; i < len(arr); i++ {
+//		j, _ := json.Marshal(arr[i])
+//		buff.WriteString(string(j))
+//	}
+//	fmt.Println(buff.String())
+//	return buff.String()
+//}
+
 func convertToJSON(arr []County) string {
 	var buff bytes.Buffer
-	for i := 0; i < len(arr); i++ {
-		j, _ := json.Marshal(arr[i])
-		buff.WriteString(string(j))
+	buff.WriteString("[14, [")
+
+	for _, county := range arr {
+		last := len(county.timeline) - 1
+		for j, cases := range county.timeline {
+			buff.WriteString(strconv.Itoa(cases))
+			if j < last {
+				buff.WriteString(",")
+			}
+		}
+		buff.WriteString("]")
 	}
-	fmt.Println(buff.String())
+	buff.WriteString("]")
 	return buff.String()
 }
