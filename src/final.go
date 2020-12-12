@@ -2,30 +2,45 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
+	"strconv"
+	"strings"
 )
 
 type Entry struct {
-	Key   string
-	Value int
+	key   string
+	value int
 }
 
-func predict(json string) {
-	command := exec.Command("python", "src/test.py")
+func predict(county, json string) chan Entry {
+	var c = make(chan Entry)
+	//println("PREDICTING: " + county)
 
-	buffer := bytes.Buffer{}
-	buffer.Write([]byte(json))
-	command.Stdin = &buffer
+	go func() {
+		//fmt.Println("RUNNING " + county + " :: " + json)
+		command := exec.Command("python", "src/test.py")
 
-	out, err := command.Output()
+		buffer := bytes.Buffer{}
+		buffer.Write([]byte(json))
+		command.Stdin = &buffer
 
-	if err != nil {
-		println(err.Error())
-		return
-	}
+		out, err := command.Output()
 
-	fmt.Println(string(out))
+		if err != nil {
+			println(err.Error())
+			return
+		}
+
+		result, err := strconv.Atoi(strings.TrimSpace(string(out)))
+		if err != nil {
+			println(err)
+		}
+		//fmt.Println(string(out)+" :: ", result)
+		e := Entry{county, result}
+		c <- e
+	}()
+
+	return c
 }
 
 func main2() {

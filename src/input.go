@@ -141,9 +141,27 @@ func main() {
 	}
 	//fmt.Printf("%d\n", len(counties))
 	//fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
-	json := convertToJSON(counties[0])
-	fmt.Println(json)
-	predict(json)
+
+	inputs := make(chan Entry)
+	for _, county := range counties {
+		c := predict(county.name, convertToJSON(county))
+		go func() {
+			e := <-c
+			//println("RECEIVED: " + e.key)
+			inputs <- e
+		}()
+	}
+	for range counties {
+		prediction := <-inputs
+		fmt.Println("FINAL GOT PRED: "+prediction.key, prediction.value)
+		//select {
+		//case prediction := <-inputs:
+		//	fmt.Println(prediction)
+		//}
+	}
+	//json := convertToJSON(counties[0])
+	//fmt.Println(json)
+	//predict(json)
 }
 
 //func convertToJSON(arr []County) string {
