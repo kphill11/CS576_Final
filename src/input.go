@@ -37,7 +37,7 @@ func findCounty(counties []County, name string) int {
 }
 
 //func readInput(counties []County) []County {
-func main2() {
+func main() {
 	//hospitals.csv:
 	//field 13 is population
 	//field 14 is county
@@ -141,7 +141,9 @@ func main2() {
 	}
 	//fmt.Printf("%d\n", len(counties))
 	//fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
-	convertToJSON(counties)
+	json := convertToJSON(counties[0])
+	fmt.Println(json)
+	predict(json)
 }
 
 //func convertToJSON(arr []County) string {
@@ -154,20 +156,18 @@ func main2() {
 //	return buff.String()
 //}
 
-func convertToJSON(arr []County) string {
+func convertToJSON(county County) string {
 	var buff bytes.Buffer
 	buff.WriteString("[14, [")
 
-	for _, county := range arr {
-		last := len(county.timeline) - 1
-		for j, cases := range county.timeline {
-			buff.WriteString(strconv.Itoa(cases))
-			if j < last {
-				buff.WriteString(",")
-			}
+	last := len(county.timeline) - 1
+	for j, cases := range county.timeline {
+		buff.WriteString(strconv.Itoa(cases))
+		if j < last {
+			buff.WriteString(",")
 		}
-		buff.WriteString("]")
 	}
+	buff.WriteString("]")
 	buff.WriteString("]")
 	return buff.String()
 }
