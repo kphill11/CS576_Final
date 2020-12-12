@@ -141,7 +141,6 @@ func newCounty(newName string, newState string) County {
 	county := County{}
 	county.name = newName
 	county.state = newState
-	county.id = fmt.Sprintf("%s.%s", county.state, county.name)
 	county.numBeds = 0
 	for i := 0; i < len(county.timeline); i++ {
 		county.timeline[i] = 0
@@ -178,7 +177,6 @@ func main() {
 	}
 	reader := csv.NewReader(csvHospFile)
 	line, err := reader.Read() //just getting the definitional line out of the way
-	fmt.Printf("%s, %s\n", line[14], line[7])
 	for {
 		line, err = reader.Read()
 		if err == io.EOF {
