@@ -1,7 +1,9 @@
 package main
 
 import (
+      "bytes"
       "encoding/csv"
+      "encoding/json"
       "fmt"
       "io"
       "os"
@@ -10,17 +12,15 @@ import (
 )
 
 type County struct {
-      name string
-      numBeds int
-      pop int
-      timeline [95]int
+      name string       `json:"name"`
+      numBeds int       `json:"num_beds"`
+      timeline [95]int  `json:"timeline"`
 }
 
 func newCounty(newName string) County {
       county := County{}
       county.name = newName
       county.numBeds = 0
-      county.pop = 0
       for i := 0; i < len(county.timeline); i++ {
             county.timeline[i] = 0
       }
@@ -37,14 +37,15 @@ func findCounty(counties []County, name string) int {
       return -1
 }
 
-func readInput(counties []County) []County {
+//func readInput(counties []County) []County {
+func main() {
       //hospitals.csv:
             //field 13 is population
             //field 14 is county
             //field 32 is beds
             //field 33 is trauma (likely not going to use)
-      //var counties []County
-      counties = append(counties, newCounty("albany"))
+      var counties []County
+      //counties = append(counties, newCounty("albany"))
       csvHospFile, errHosp := os.Open("..\\CS576_Final\\data\\hospitals.csv")
       if errHosp != nil {
             fmt.Printf("Error while loading hospitals.csv:\n")
@@ -69,17 +70,6 @@ func readInput(counties []County) []County {
                         if index < 0 { //if the county isn't already on record
                               counties = append(counties, newCounty(name))
                               index = len(counties) - 1
-                              if line[13] != "-999" {
-                                   //s fmt.Printf("%s\n", line[13])
-                                    popNum, err := strconv.Atoi(line[13])
-                                    if err != nil {
-                                          fmt.Printf("%s\n", err)
-                                          os.Exit(3)
-                                    }
-                                    if popNum >= 0 {
-                                          counties[index].pop = popNum
-                                    }
-                              } //county population, not likely to change significantly enough to track
                         }
                         if line[31] != "-999" {
                               //fmt.Printf("%s\n", line[31])
@@ -152,5 +142,15 @@ func readInput(counties []County) []County {
       }
       //fmt.Printf("%d\n", len(counties))
       //fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
-      return counties
+      convertToJSON(counties)
+}
+
+func convertToJSON(arr []County) string {
+      var buff bytes.Buffer
+      for i := 0; i < len(arr); i++ {
+            j, _ := json.Marshal(arr[i])
+            buff.WriteString(string(j))
+      }
+      fmt.Println(buff.String())
+      return buff.String()
 }
