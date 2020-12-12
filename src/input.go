@@ -205,6 +205,28 @@ func main() {
 	fmt.Println(countyMap["tx.randall"])
 	fmt.Println(countyMap["tx.bastrop"])
 	fmt.Println(countyMap["ny.westchester"])
+	for _, county := range counties {
+		search := county.state + "." + county.name
+		fmt.Print(search, ",")
+		for i := 0; i < len(currentCounties); i++ {
+			if currentCounties[i].key == search {
+				fmt.Print(currentCounties[i].value)
+			}
+		}
+		fmt.Print(",")
+		for i := 0; i < len(predictedCounties); i++ {
+			if predictedCounties[i].key == search {
+				fmt.Print(predictedCounties[i].value)
+			}
+		}
+		fmt.Print(",")
+		for i := 0; i < len(changeCounties); i++ {
+			if changeCounties[i].key == search {
+				fmt.Print(changeCounties[i].value)
+			}
+		}
+		fmt.Println()
+	}
 
 	//command := exec.Command("python", "src/test.py")
 	////command.Stderr = os.Stderr
