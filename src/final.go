@@ -12,35 +12,25 @@ type Entry struct {
 	value int
 }
 
-func predict(county, json string) chan Entry {
-	var c = make(chan Entry)
-	//println("PREDICTING: " + county)
+func predict(county, json string) Entry {
+	command := exec.Command("python", "src/test.py")
 
-	go func() {
-		//fmt.Println("RUNNING " + county + " :: " + json)
-		command := exec.Command("python", "src/test.py")
+	buffer := bytes.Buffer{}
+	buffer.Write([]byte(json))
+	command.Stdin = &buffer
 
-		buffer := bytes.Buffer{}
-		buffer.Write([]byte(json))
-		command.Stdin = &buffer
+	out, err := command.Output()
 
-		out, err := command.Output()
+	if err != nil {
+		println(err.Error())
+		return Entry{county, -1}
+	}
 
-		if err != nil {
-			println(err.Error())
-			return
-		}
-
-		result, err := strconv.Atoi(strings.TrimSpace(string(out)))
-		if err != nil {
-			println(err)
-		}
-		//fmt.Println(string(out)+" :: ", result)
-		e := Entry{county, result}
-		c <- e
-	}()
-
-	return c
+	result, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	if err != nil {
+		println(err)
+	}
+	return Entry{county, result}
 }
 
 func main2() {
