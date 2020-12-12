@@ -31,10 +31,11 @@ def run(future, values):
 
 
 def main():
-    r = json.loads(input())
-    future = r[0]
-    values = r[1]
-    run(future, values)
+    while True:
+        r = json.loads(input())
+        future = r[0]
+        values = r[1]
+        run(future, values)
     # g = run(1, data)
     # x = list(range(len(data)))
     # plt.plot(x, data)

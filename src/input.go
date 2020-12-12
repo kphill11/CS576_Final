@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -142,24 +143,82 @@ func main() {
 	//fmt.Printf("%d\n", len(counties))
 	//fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
 
-	c := make(chan Entry)
-	for _, county := range counties {
-		county := county
+	//county := counties[0]
+	//predict(county.name, convertToJSON(county))
+
+	//bufferSize := 10
+
+	/*
+		- IPC
+		- Single threaded server: single connection, multiple connections, limited individual connections
+	*/
+	workerThreads := 4
+
+	processed := make(chan string)
+	queue := make(chan County)
+	done := make(chan bool)
+	for i := 0; i < workerThreads; i++ {
 		go func() {
-			c <- predict(county.name, convertToJSON(county))
+			for {
+				select {
+				case county := <-queue:
+					result := run(county)
+					go func() {
+						processed <- result
+					}()
+				case <-done:
+					break
+				}
+			}
 		}()
 	}
-	for range counties {
-		prediction := <-c
-		fmt.Println("FINAL GOT PRED: "+prediction.key, prediction.value)
-		//select {
-		//case prediction := <-inputs:
-		//	fmt.Println(prediction)
-		//}
+
+	//c := make(chan string)
+	for _, county := range counties {
+		queue <- county
+		//county := county
+		//go func() {
+		//fmt.Println(i, string(buff))
+		//}()
+
+		//time.Sleep(100 * time.Millisecond)
 	}
-	//json := convertToJSON(counties[0])
-	//fmt.Println(json)
-	//predict(json)
+	for range counties {
+		prediction := <-processed
+		fmt.Println("FINAL GOT PRED: " + prediction)
+	}
+
+	//command := exec.Command("python", "src/test.py")
+	////command.Stderr = os.Stderr
+	//
+	//buffer := bytes.Buffer{}
+	//fmt.Println(convertToJSON(county))
+	//buffer.Write([]byte(convertToJSON(county)))
+	//command.Stdin = &buffer
+	//
+	//out, err := command.Output()
+	//
+	//if err != nil {
+	//	//fmt.Println(convertToJSON(county))
+	//	println("FUCK:", err.Error())
+	//	return
+	//}
+	//println("F: ", out)
+
+	//result, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	//fmt.Println(result)
+
+	//c := make(chan Entry)
+	//for _, county := range counties {
+	//	county := county
+	//	go func() {
+	//		c <- predict(county.name, convertToJSON(county))
+	//	}()
+	//}
+	//for range counties {
+	//	prediction := <-c
+	//	fmt.Println("FINAL GOT PRED: "+prediction.key, prediction.value)
+	//}
 }
 
 //func convertToJSON(arr []County) string {
@@ -171,6 +230,25 @@ func main() {
 //	fmt.Println(buff.String())
 //	return buff.String()
 //}
+
+func run(county County) string {
+	conn, err := net.Dial("tcp", "127.0.0.1:5000")
+	if err != nil {
+		println("CE:", err)
+	}
+	//c <- predict(county.name, convertToJSON(county))
+	if _, err = conn.Write([]byte(convertToJSON(county))); err != nil {
+		println("E:", err.Error())
+	}
+
+	buff := make([]byte, 128)
+	if _, err = conn.Read(buff); err != nil {
+		println("EF:", err.Error())
+	}
+	conn.Close()
+	//c <- string(buff)
+	return string(buff)
+}
 
 func convertToJSON(county County) string {
 	var buff bytes.Buffer
