@@ -13,7 +13,7 @@ type County struct {
       name string
       numBeds int
       pop int
-      timeline [365]int
+      timeline [96]int
 }
 
 func newCounty(newName string) County {
