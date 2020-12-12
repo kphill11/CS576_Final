@@ -11,9 +11,9 @@ import (
 )
 
 type County struct {
-	name     string  `json:"name"`
-	numBeds  int     `json:"num_beds"`
-	timeline [95]int `json:"timeline"`
+	name     string
+	numBeds  int
+	timeline [95]int
 }
 
 func newCounty(newName string) County {
