@@ -1,5 +1,6 @@
 import json
 import math
+import socket
 
 import numpy as np
 from scipy.optimize import curve_fit
@@ -12,6 +13,12 @@ data = [6847, 6878, 6894, 6918, 7039, 7057, 7097, 7125, 7144, 7158, 7201, 7268, 
         9708, 9775, 9922, 10038, 10115, 10259, 10359, 10440, 10496, 10687, 11093, 11270, 11366, 11381, 11555, 11682,
         11751, 11911, 11957, 12201, 12624, 12716, 12913]
 
+# x = list(range(len(data)))
+# plt.plot(x, data)
+# plt.savefig("test.png", dpi=600)
+# plt.show()
+# exit(0)
+
 
 def f(x):
     return math.e ** x + 10
@@ -23,19 +30,46 @@ def exponential(x, a, b, c):
 
 def run(future, values):
     x = list(range(len(values)))
-    pars, cov = curve_fit(f=exponential, xdata=x, ydata=values, p0=[1, 1, 0], bounds=(-np.inf, np.inf))
+    # try:
+    # print(values)
+    pars, cov = curve_fit(f=exponential, xdata=x, ydata=values, maxfev=5000, p0=[1, 1, 0], bounds=(-np.inf, np.inf))
+    # except:
+    #     exit(0)
     day_to_predict = x[-1] + future
     prediction = exponential(day_to_predict, pars[0], pars[1], pars[2])
-    print(round(prediction))
+    # print(round(prediction))
+    return round(prediction)
     # return lambda n: exponential(n, pars[0], pars[1], pars[2])
 
 
 def main():
-    while True:
-        r = json.loads(input())
-        future = r[0]
-        values = r[1]
-        run(future, values)
+    host = '127.0.0.1'  # Standard loopback interface address (localhost)
+    port = 5000  # Port to listen on (non-privileged ports are > 1023)
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setblocking(True)
+        s.bind((host, port))
+        s.listen()
+        while True:
+            conn, addr = s.accept()
+            with conn:
+                print('Connected by', addr)
+                while True:
+                    data = conn.recv(2048)
+                    if not data:
+                        break
+                    r = json.loads(data.decode('utf-8'))
+                    future = r[0]
+                    values = r[1]
+                    result = run(future, values)
+                    conn.send(str(result).encode('utf-8'))
+                print("Client disconnected", addr)
+
+    # while True:
+    #     r = json.loads(input())
+    #     future = r[0]
+    #     values = r[1]
+    #     run(future, values)
     # g = run(1, data)
     # x = list(range(len(data)))
     # plt.plot(x, data)
