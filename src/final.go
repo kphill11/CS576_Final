@@ -12,6 +12,11 @@ type Entry struct {
 	value int
 }
 
+type FloatEntry struct {
+	key   string
+	value float32
+}
+
 func predict(county, json string) Entry {
 	subprocess := exec.Command("python", "src/test.py")
 

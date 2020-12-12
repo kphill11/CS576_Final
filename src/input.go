@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -160,6 +161,7 @@ func findCounty(counties []County, name string, state string) int {
 
 //func readInput(counties []County) []County {
 func main() {
+
 	//hospitals.csv:
 	//field 7 is state
 	//field 13 is population
@@ -255,15 +257,21 @@ func main() {
 			counties[index].timeline[date] += caseNum
 		}
 	}
-	//fmt.Printf("%d\n", len(counties))
-	for i := len(counties) - 1; i > 0; i-- {
+
+	//fmt.Println(len(counties))
+	for i := 0; i < len(counties); i++ {
 		if counties[i].numBeds == 0 {
 			counties[i] = counties[len(counties)-1]
 			counties = counties[:len(counties)-1]
 			i--
 		}
-
 	}
+	countyMap := make(map[string]County)
+	for _, county := range counties {
+		countyMap[county.name] = county
+	}
+	//fmt.Println(len(counties))
+
 	//fmt.Printf("%d\n", len(counties))
 	//fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
 
@@ -278,7 +286,7 @@ func main() {
 	*/
 	workerThreads := 4
 
-	processed := make(chan string)
+	processed := make(chan Entry)
 	queue := make(chan County)
 	done := make(chan bool)
 	for i := 0; i < workerThreads; i++ {
@@ -288,7 +296,7 @@ func main() {
 				case county := <-queue:
 					result := run(county)
 					go func() {
-						processed <- result
+						processed <- Entry{county.name, result}
 					}()
 				case <-done:
 					break
@@ -307,10 +315,43 @@ func main() {
 
 		//time.Sleep(100 * time.Millisecond)
 	}
-	for range counties {
-		prediction := <-processed
-		fmt.Println("FINAL GOT PRED: " + prediction)
+
+	var predictedCounties []FloatEntry
+	var currentCounties []FloatEntry
+	var changeCounties []FloatEntry
+
+	for _, county := range counties {
+		entry := <-processed
+		//fmt.Println("FINAL GOT PRED: "+entry.key, entry.value)
+
+		predictedEntry := FloatEntry{entry.key, float32(entry.value) / float32(county.numBeds)}
+		predictedCounties = append(predictedCounties, predictedEntry)
+
+		currentEntry := FloatEntry{entry.key, float32(county.timeline[len(county.timeline)-1]) / float32(county.numBeds)}
+		currentCounties = append(currentCounties, currentEntry)
+
+		changeEntry := FloatEntry{entry.key, currentEntry.value - predictedEntry.value}
+		changeCounties = append(changeCounties, changeEntry)
 	}
+
+	sort.Slice(predictedCounties, func(i, j int) bool {
+		return predictedCounties[i].value > predictedCounties[j].value
+	})
+
+	sort.Slice(currentCounties, func(i, j int) bool {
+		return currentCounties[i].value > currentCounties[j].value
+	})
+
+	sort.Slice(changeCounties, func(i, j int) bool {
+		return changeCounties[i].value > changeCounties[j].value
+	})
+
+	fmt.Println(currentCounties)
+	fmt.Println(predictedCounties)
+	fmt.Println(changeCounties)
+	fmt.Println(countyMap["randall"])
+	fmt.Println(countyMap["bastrop"])
+	fmt.Println(countyMap["westces"])
 
 	//command := exec.Command("python", "src/test.py")
 	////command.Stderr = os.Stderr
@@ -355,7 +396,7 @@ func main() {
 //	return buff.String()
 //}
 
-func run(county County) string {
+func run(county County) int {
 	conn, err := net.Dial("tcp", "127.0.0.1:5000")
 	if err != nil {
 		println("CE:", err)
@@ -366,12 +407,20 @@ func run(county County) string {
 	}
 
 	buff := make([]byte, 128)
-	if _, err = conn.Read(buff); err != nil {
-		println("EF:", err.Error())
+	n, err := conn.Read(buff)
+	if err != nil {
+		println("EF:", err)
 	}
+	buff = buff[:n]
 	conn.Close()
 	//c <- string(buff)
-	return string(buff)
+
+	result, err := strconv.Atoi(strings.TrimSpace(string(buff)))
+	if err != nil {
+		println("F:", err.Error())
+	}
+	return result
+	//return string(buff)
 }
 
 func convertToJSON(county County) string {
