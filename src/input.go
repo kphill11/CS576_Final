@@ -13,7 +13,7 @@ type County struct {
       name string
       numBeds int
       pop int
-      timeline [96]int
+      timeline [95]int
 }
 
 func newCounty(newName string) County {
@@ -108,7 +108,10 @@ func readInput(counties []County) []County {
       reader = csv.NewReader(csvCovidFile)
       line, err = reader.Read()
       date := 0
-      dateString := "2020-01-21"
+      dateString := "2020-09-07"
+      for line[0] != dateString {
+            line, err = reader.Read()
+      }
       for {
             line, err = reader.Read()
             if err == io.EOF {
@@ -137,7 +140,7 @@ func readInput(counties []County) []County {
                   counties[index].timeline[date] += caseNum
             }
       }
-      fmt.Printf("%d\n", len(counties))
+      //fmt.Printf("%d\n", len(counties))
       for i := len(counties) - 1; i > 0; i-- {
             if counties[i].numBeds == 0 {
                   counties[i] = counties[len(counties) - 1]
@@ -145,7 +148,9 @@ func readInput(counties []County) []County {
                   counties = counties[:len(counties) - 1]
                   i--
             }
-            //fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
+
       }
+      //fmt.Printf("%d\n", len(counties))
+      //fmt.Printf("%s: population: %d. number of beds: %d. Number of infected people on December 10th: %d\n", counties[i].name, counties[i].pop, counties[i].numBeds, counties[i].timeline[95          ])
       return counties
 }
